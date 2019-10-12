@@ -1,0 +1,7 @@
+    led_0 {
+        compatible = "hisi_pwm_led";
+        freq = <3000>;
+        channel = <0>;
+        inverse = <0>;
+        max_brightness = <255>;
+    };
