@@ -30,6 +30,7 @@ typedef struct
     u32 freq;
     u32 inv;
     u32 max_brightness;
+    u32 default_brightness;
 }led_data_t;
 
 
@@ -49,6 +50,10 @@ static int led_probe(struct platform_device *dev)
 {
     int ret = 0;
     led_data_t *led_data;
+    const char *name = dev->dev.of_node->name;
+
+
+    DEBUG("init %s", name);
 
     led_data = kzalloc(sizeof(*led_data), GFP_KERNEL);
     if (IS_ERR_OR_NULL(led_data))
@@ -57,32 +62,37 @@ static int led_probe(struct platform_device *dev)
         return -ENOMEM;
     }
 
-    if (of_property_read_u32(dev->dev.of_node, "freq", &led_data->freq))
+    if (of_property_read_u32(dev->dev.of_node, "channel", &led_data->ch))
     {
-        ERROR("failed to find freq in dts !");
+        ERROR("%s failed to find channel in dts !", name);
         ret = -EINVAL;
         goto ERR;
     }
-    if (of_property_read_u32(dev->dev.of_node, "channel", &led_data->ch))
+    if (of_property_read_u32(dev->dev.of_node, "freq", &led_data->freq))
     {
-        ERROR("failed to find channel in dts !");
-        ret = -EINVAL;
-        goto ERR;
+        DEBUG("%s failed to find freq in dts, use default 10000", name);
+        led_data->freq = 10000;
     }
     if (of_property_read_u32(dev->dev.of_node, "inverse", &led_data->inv))
     {
-        DEBUG("failed to find inverse in dts, use default 0");
+        DEBUG("%s failed to find inverse in dts, use default 0", name);
         led_data->inv = 0;
     }
     if (of_property_read_u32(dev->dev.of_node, "max_brightness", &led_data->max_brightness))
     {
-        DEBUG("failed to find max_brightness in dts, use default 255");
+        DEBUG("%s failed to find max_brightness in dts, use default 255", name);
         led_data->max_brightness = 255;
     }
-
-    if (hipwm_set_time(led_data->ch, led_data->freq, 0, led_data->inv))
+    if (of_property_read_u32(dev->dev.of_node, "default_brightness", &led_data->default_brightness))
     {
-        ERROR("init pwm failed with  ch:%u  freq:%u  inv:%u  max_brightness:%u !",
+        DEBUG("%s failed to find default_brightness in dts, use default 0", name);
+        led_data->default_brightness = 0;
+    }
+
+    if (hipwm_set_time(led_data->ch, led_data->freq, led_data->default_brightness, led_data->inv))
+    {
+        ERROR("%s init pwm failed with  ch:%u  freq:%u  inv:%u  max_brightness:%u !",
+                name,
                 led_data->ch,
                 led_data->freq,
                 led_data->inv,
@@ -91,14 +101,14 @@ static int led_probe(struct platform_device *dev)
         goto ERR;
     }
 
-    led_data->leddev.name = dev->dev.of_node->name;
+    led_data->leddev.name = name;
     led_data->leddev.brightness = 0;
     led_data->leddev.brightness_set = led_set;
     led_data->leddev.max_brightness = led_data->max_brightness;
     ret = led_classdev_register(NULL, &led_data->leddev);
     if (ret)
     {
-        ERROR("register led classdev failed !");
+        ERROR("%s register led classdev failed !", name);
         goto ERR;
     }
     platform_set_drvdata(dev, led_data);
