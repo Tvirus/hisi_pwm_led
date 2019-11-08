@@ -102,7 +102,7 @@ static int led_probe(struct platform_device *dev)
     }
 
     led_data->leddev.name = name;
-    led_data->leddev.brightness = 0;
+    led_data->leddev.brightness = led_data->default_brightness;
     led_data->leddev.brightness_set = led_set;
     led_data->leddev.max_brightness = led_data->max_brightness;
     ret = led_classdev_register(NULL, &led_data->leddev);
