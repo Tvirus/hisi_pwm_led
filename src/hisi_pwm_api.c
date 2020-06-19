@@ -63,7 +63,7 @@ void hipwm_enable(u32 ch, int enable)
         hipwm_setbits(ch, PWM_REG_CTRL, PWM_ENABLE, 0);
 }
 
-/* 设置频率和占空比，单位Hz，范围1~100000。单位1%，范围[0-255] */
+/* 设置频率和占空比，单位Hz，范围1~100000。单位1/255，范围[0-255] */
 int hipwm_set_time(u32 ch, u32 f, u32 d, u8 inverse)
 {
     if (1 < ch)
