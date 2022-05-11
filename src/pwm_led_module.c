@@ -117,7 +117,6 @@ static int led_probe(struct platform_device *dev)
     return 0;
 
 
-
 ERR:
     kfree(led_data);
     return ret;
@@ -131,6 +130,7 @@ static int led_remove(struct platform_device *dev)
         return -EFAULT;
 
     led_classdev_unregister(&led_data->leddev);
+    kfree(led_data);
     return 0;
 }
 
